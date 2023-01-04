@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+option go_package = "github.com/grpcdemo/person";
+
+package person;
+
+// PersonQuery is a class with following methods
+service PersonQuery {
+  // GetPerson is a method performing a unary call
+  rpc GetPerson (PersonKey) returns (Person);
+
+  // GetPersonBlockedInput is a method waiting for client inputs to conclude
+  rpc GetPersonBlockedInput (stream PersonKey) returns (Person);
+
+  // GetPersonBlockedOutput is a method waiting for server outputs to conclude
+  rpc GetPersonBlockedOutput (PersonKey) returns (stream Person);
+
+  // GetPersonBlockedInputOutput is a method waiting for both sides to conclude
+  rpc GetPersonBlockedInputOutput (stream PersonKey) returns (stream Person);
+} 
+
+// PersonKey is a struct with a single field
+message PersonKey {
+
+  // idHash is a string field
+  string idHash = 1;
+}
+
+// Person is a struct with numerous fields
+message Person {
+
+  // Choice is an enum type
+	enum Choice {
+
+    // Default choice
+		DEFAULT = 0;
+
+    // Other choices
+	  ONE = 1;
+		TWO = 2;
+	  THREE = 3;
+
+    // Choices reserved for later use
+	  reserved 4, 6 to 8;
+	}
+
+  // Child is an inner struct extending Person
+  message Child {
+
+    // Base class
+    Person self = 1;
+
+    // Other fields
+    Person father = 2;
+    Person mother = 3;
+  }
+
+  // Singular fields of different types
+  bool isMale = 1;
+  int32 age = 2;
+  float weight = 3;
+  double height = 4;
+  string name = 5;
+
+  // Optional fields
+  optional Person partner = 6;
+  optional Choice choice = 7;
+
+  // occupation is an union of following fields
+  oneof occupation {
+		string jobTitle = 8;
+    string studyField = 9;
+  }
+
+  // addresses contains key-value pairs of string type
+  map<string, string> addresses = 10;
+
+  // childs is an array of childs
+  repeated Child childs = 11;
+}
