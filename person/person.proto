@@ -2,6 +2,8 @@ syntax = "proto3";
 
 option go_package = "github.com/grpcdemo/person";
 
+import "google/protobuf/empty.proto";
+
 package person;
 
 // PersonQuery is a class with following methods
@@ -17,6 +19,9 @@ service PersonQuery {
 
   // GetPersonBlockedInputOutput is a method waiting for both sides to conclude
   rpc GetPersonBlockedInputOutput (stream PersonKey) returns (stream Person);
+
+  // SetPerson is another unary method
+  rpc SetPerson(Person) returns (google.protobuf.Empty);
 } 
 
 // PersonKey is a struct with a single field

@@ -2,20 +2,43 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"log"
 	"net"
 
 	"github.com/go-redis/redis"
+	lib "github.com/grpcdemo/lib"
 	"github.com/grpcdemo/person"
+	flag "github.com/spf13/pflag"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/emptypb"
+	"gopkg.in/yaml.v2"
+)
+
+var (
+	file *string = flag.StringP("file", "f", "config.yaml", "server configuration")
 )
 
 type PersonQueryServerStruct struct {
 	redisClient *redis.Client
 	person.UnimplementedPersonQueryServer
+}
+
+func (x *PersonQueryServerStruct) SetPerson(ctx context.Context, in *person.Person) (*emptypb.Empty, error) {
+	empty := new(emptypb.Empty)
+	idHash := lib.Hash(in.GetName())
+	personMarshalled, err := protojson.Marshal(in)
+	if err != nil {
+		return empty, fmt.Errorf("unable to marshal person: %w", err)
+	}
+
+	fmt.Printf("Saved: %s\n", string(personMarshalled))
+
+	if err := x.redisClient.Set(idHash, string(personMarshalled), 0).Err(); err != nil {
+		return empty, fmt.Errorf("unable to set person due to %w", err)
+	}
+	return empty, nil
 }
 
 func (x *PersonQueryServerStruct) GetPerson(ctx context.Context, in *person.PersonKey) (*person.Person, error) {
@@ -24,6 +47,9 @@ func (x *PersonQueryServerStruct) GetPerson(ctx context.Context, in *person.Pers
 	if err != nil {
 		return nil, fmt.Errorf("unable to find person with hash %s due to %w", idHash, err)
 	}
+
+	fmt.Printf("Requested: %s\n", personMarshalled)
+
 	var person person.Person
 	if err := protojson.Unmarshal([]byte(personMarshalled), &person); err != nil {
 		return nil, fmt.Errorf("unable to extract person from %s due to %w", personMarshalled, err)
@@ -44,38 +70,21 @@ func (x *PersonQueryServerStruct) GetPersonBlockedInputOutput(person.PersonQuery
 }
 
 func main() {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", 50051))
+	flag.Parse()
+	config, err := parseConfig()
+	if err != nil {
+		log.Fatalf("unable to read server params: %s", err)
+	}
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", config.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: ":6379",
+		Addr:     fmt.Sprintf("%s:%d", config.DbHost, config.DbPort),
+		Password: "",
 	})
-
-	db := map[string]*person.Person{
-		"Yamac": {
-			IsMale: true,
-			Age:    21,
-			Weight: 82.5,
-			Height: 1.86,
-			Name:   "Yamac",
-			Occupation: &person.Person_JobTitle{
-				JobTitle: "Software Engineer",
-			},
-		},
-	}
-
-	for name, person := range db {
-		personMarshalled, err := protojson.Marshal(person)
-		if err != nil {
-			log.Fatalf("unable to marshal %v", person)
-		}
-
-		if err := redisClient.Set(hash(name), string(personMarshalled), 0).Err(); err != nil {
-			log.Fatalf("unable to set person struct due to %s", err)
-		}
-	}
 
 	grpcServer := grpc.NewServer()
 	person.RegisterPersonQueryServer(grpcServer, &PersonQueryServerStruct{
@@ -86,8 +95,22 @@ func main() {
 	}
 }
 
-func hash(v string) string {
-	h := sha256.New()
-	h.Write([]byte(v))
-	return fmt.Sprintf("%x", h.Sum(nil))
+type configServer struct {
+	Port   int    `yaml:"port"`
+	DbHost string `yaml:"dbHost"`
+	DbPort int    `yaml:"dbPort"`
+}
+
+func parseConfig() (*configServer, error) {
+	bytes, err := lib.ReadFile(*file)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read config file: %w", err)
+	}
+
+	var config configServer
+	if err := yaml.Unmarshal(bytes, &config); err != nil {
+		return nil, fmt.Errorf("unable to cast object to config struct: %w", err)
+	}
+
+	return &config, nil
 }

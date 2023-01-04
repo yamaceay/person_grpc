@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -30,6 +31,8 @@ type PersonQueryClient interface {
 	GetPersonBlockedOutput(ctx context.Context, in *PersonKey, opts ...grpc.CallOption) (PersonQuery_GetPersonBlockedOutputClient, error)
 	// GetPersonBlockedInputOutput is a method waiting for both sides to conclude
 	GetPersonBlockedInputOutput(ctx context.Context, opts ...grpc.CallOption) (PersonQuery_GetPersonBlockedInputOutputClient, error)
+	// SetPerson is another unary method
+	SetPerson(ctx context.Context, in *Person, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type personQueryClient struct {
@@ -146,6 +149,15 @@ func (x *personQueryGetPersonBlockedInputOutputClient) Recv() (*Person, error) {
 	return m, nil
 }
 
+func (c *personQueryClient) SetPerson(ctx context.Context, in *Person, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/person.PersonQuery/SetPerson", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PersonQueryServer is the server API for PersonQuery service.
 // All implementations must embed UnimplementedPersonQueryServer
 // for forward compatibility
@@ -158,6 +170,8 @@ type PersonQueryServer interface {
 	GetPersonBlockedOutput(*PersonKey, PersonQuery_GetPersonBlockedOutputServer) error
 	// GetPersonBlockedInputOutput is a method waiting for both sides to conclude
 	GetPersonBlockedInputOutput(PersonQuery_GetPersonBlockedInputOutputServer) error
+	// SetPerson is another unary method
+	SetPerson(context.Context, *Person) (*emptypb.Empty, error)
 	mustEmbedUnimplementedPersonQueryServer()
 }
 
@@ -176,6 +190,9 @@ func (UnimplementedPersonQueryServer) GetPersonBlockedOutput(*PersonKey, PersonQ
 }
 func (UnimplementedPersonQueryServer) GetPersonBlockedInputOutput(PersonQuery_GetPersonBlockedInputOutputServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetPersonBlockedInputOutput not implemented")
+}
+func (UnimplementedPersonQueryServer) SetPerson(context.Context, *Person) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetPerson not implemented")
 }
 func (UnimplementedPersonQueryServer) mustEmbedUnimplementedPersonQueryServer() {}
 
@@ -281,6 +298,24 @@ func (x *personQueryGetPersonBlockedInputOutputServer) Recv() (*PersonKey, error
 	return m, nil
 }
 
+func _PersonQuery_SetPerson_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Person)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PersonQueryServer).SetPerson(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/person.PersonQuery/SetPerson",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PersonQueryServer).SetPerson(ctx, req.(*Person))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PersonQuery_ServiceDesc is the grpc.ServiceDesc for PersonQuery service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -291,6 +326,10 @@ var PersonQuery_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPerson",
 			Handler:    _PersonQuery_GetPerson_Handler,
+		},
+		{
+			MethodName: "SetPerson",
+			Handler:    _PersonQuery_SetPerson_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

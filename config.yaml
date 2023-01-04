@@ -1,0 +1,3 @@
+port: 50051
+dbHost: localhost
+dbPort: 6379
