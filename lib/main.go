@@ -21,8 +21,14 @@ func ReadFile(file string) ([]byte, error) {
 	return bytes, nil
 }
 
-func Hash(v string) string {
+func Hash(v string, limit ...int) string {
 	h := sha256.New()
 	h.Write([]byte(v))
-	return fmt.Sprintf("%x", h.Sum(nil))
+	hash := fmt.Sprintf("%x", h.Sum(nil))
+	if len(limit) > 0 {
+		if maxchar := limit[0]; maxchar > 0 && maxchar < len(hash) {
+			hash = hash[:]
+		}
+	}
+	return hash
 }

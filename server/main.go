@@ -27,7 +27,7 @@ type PersonQueryServerStruct struct {
 
 func (x *PersonQueryServerStruct) SetPerson(ctx context.Context, in *person.Person) (*emptypb.Empty, error) {
 	empty := new(emptypb.Empty)
-	idHash := lib.Hash(in.GetName())
+	idHash := lib.Hash(in.GetName(), 10)
 	personMarshalled, err := protojson.Marshal(in)
 	if err != nil {
 		return empty, fmt.Errorf("unable to marshal person: %w", err)
@@ -42,7 +42,7 @@ func (x *PersonQueryServerStruct) SetPerson(ctx context.Context, in *person.Pers
 }
 
 func (x *PersonQueryServerStruct) GetPerson(ctx context.Context, in *person.PersonKey) (*person.Person, error) {
-	idHash := in.GetIdHash()
+	idHash := in.GetId()
 	personMarshalled, err := x.redisClient.Get(idHash).Result()
 	if err != nil {
 		return nil, fmt.Errorf("unable to find person with hash %s due to %w", idHash, err)

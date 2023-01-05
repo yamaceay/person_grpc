@@ -56,7 +56,7 @@ func main() {
 			}
 		case "get":
 			key := person.PersonKey{
-				IdHash: lib.Hash(cmd.Arg),
+				Id: lib.Hash(cmd.Arg, 10),
 			}
 			person, err := personQueryClient.GetPerson(ctx, &key)
 			if err != nil {

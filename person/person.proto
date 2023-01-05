@@ -27,8 +27,8 @@ service PersonQuery {
 // PersonKey is a struct with a single field
 message PersonKey {
 
-  // idHash is a string field
-  string idHash = 1;
+  // id is a string field
+  string id = 1;
 }
 
 // Person is a struct with numerous fields
@@ -56,8 +56,8 @@ message Person {
     Person self = 1;
 
     // Other fields
-    Person father = 2;
-    Person mother = 3;
+    PersonKey father = 2;
+    PersonKey mother = 3;
   }
 
   // Singular fields of different types
@@ -68,7 +68,7 @@ message Person {
   string name = 5;
 
   // Optional fields
-  optional Person partner = 6;
+  optional PersonKey partner = 6;
   optional Choice choice = 7;
 
   // occupation is an union of following fields
