@@ -1,0 +1,1 @@
+docker run -it person-server:latest /bin/sh

@@ -29,12 +29,15 @@ func main() {
 		log.Fatalf("unable to get port due to %s", err)
 	}
 
+	dialAddress := fmt.Sprintf("%s:%d", config.ServerHost, config.ServerPort)
+
 	dialOption := grpc.WithTransportCredentials(insecure.NewCredentials())
-	conn, err := grpc.Dial(fmt.Sprintf(":%d", config.Port), dialOption)
+	conn, err := grpc.Dial(dialAddress, dialOption)
 	if err != nil {
 		log.Fatalf("fail to dial: %s", err)
 	}
 	defer conn.Close()
+
 	personQueryClient := person.NewPersonQueryClient(conn)
 
 	ctx := context.Background()
@@ -71,7 +74,9 @@ func main() {
 }
 
 type configClient struct {
-	Port int `yaml:"port"`
+	ServerHost string `yaml:"serverHost"`
+	ServerPort int    `yaml:"serverPort"`
+	Port       int    `yaml:"port"`
 }
 
 func parseConfig() (*configClient, error) {

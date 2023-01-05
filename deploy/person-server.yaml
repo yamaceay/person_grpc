@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: person-server-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: person-server
+  template:
+    # pod definition continues ...
+    metadata:
+      labels:
+        app: person-server
+    spec:
+      containers:
+      - name: person-server
+        image: person-server:latest
+        imagePullPolicy: Never
+        ports: 
+        - containerPort: 50051

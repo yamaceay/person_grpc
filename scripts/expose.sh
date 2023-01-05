@@ -1,0 +1,1 @@
+kubectl port-forward svc/person-service $1:$1

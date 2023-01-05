@@ -1,0 +1,10 @@
+[
+    {
+        "op":  "set",
+        "arg": "{\"age\":36, \"weight\":64.5, \"height\":1.54, \"name\":\"B\", \"partner\":{\"id\": \"6b23c0d5f3\"}, \"choice\":\"ONE\", \"studyField\":\"Computer Science\", \"childs\":[{\"self\":{\"age\":5, \"name\":\"B1\"}}, {\"self\":{\"age\":7, \"name\":\"B2\"}}]}"
+    },
+    {
+        "op":  "get",
+        "arg": "B"
+    }
+]

@@ -1,0 +1,10 @@
+[
+    {
+        "op":  "set",
+        "arg": "{\"isMale\": true, \"age\":38, \"weight\":84.5, \"height\":1.94, \"name\":\"C\"}"
+    },
+    {
+        "op":  "get",
+        "arg": "C"
+    }
+]
