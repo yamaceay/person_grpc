@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: person-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      host:
+      paths:
+      - path: /person-service
+        pathType: Prefix
+        backend:
+          service:
+            name: person-service
+            port:
+              number: 8080
