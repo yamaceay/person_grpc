@@ -1,1 +1,1 @@
-docker run -it person-server:latest /bin/sh
+docker run --rm -itd -p 50051:50051 person-server

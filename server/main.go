@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 
-	"github.com/go-redis/redis"
 	lib "github.com/grpcdemo/lib"
 	"github.com/grpcdemo/person"
 	flag "github.com/spf13/pflag"
@@ -21,7 +20,7 @@ var (
 )
 
 type PersonQueryServerStruct struct {
-	redisClient *redis.Client
+	db map[string]string
 	person.UnimplementedPersonQueryServer
 }
 
@@ -35,18 +34,13 @@ func (x *PersonQueryServerStruct) SetPerson(ctx context.Context, in *person.Pers
 
 	fmt.Printf("Saved: %s\n", string(personMarshalled))
 
-	if err := x.redisClient.Set(idHash, string(personMarshalled), 0).Err(); err != nil {
-		return empty, fmt.Errorf("unable to set person due to %w", err)
-	}
+	x.db[idHash] = string(personMarshalled)
 	return empty, nil
 }
 
 func (x *PersonQueryServerStruct) GetPerson(ctx context.Context, in *person.PersonKey) (*person.Person, error) {
 	idHash := in.GetId()
-	personMarshalled, err := x.redisClient.Get(idHash).Result()
-	if err != nil {
-		return nil, fmt.Errorf("unable to find person with hash %s due to %w", idHash, err)
-	}
+	personMarshalled := x.db[idHash]
 
 	fmt.Printf("Requested: %s\n", personMarshalled)
 
@@ -81,14 +75,9 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", config.DbHost, config.DbPort),
-		Password: "",
-	})
-
 	grpcServer := grpc.NewServer()
 	person.RegisterPersonQueryServer(grpcServer, &PersonQueryServerStruct{
-		redisClient: redisClient,
+		db: make(map[string]string),
 	})
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
@@ -96,9 +85,7 @@ func main() {
 }
 
 type configServer struct {
-	Port   int    `yaml:"port"`
-	DbHost string `yaml:"dbHost"`
-	DbPort int    `yaml:"dbPort"`
+	Port int `yaml:"port"`
 }
 
 func parseConfig() (*configServer, error) {
