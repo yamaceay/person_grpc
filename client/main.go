@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
+	"strconv"
+	"strings"
 
 	flag "github.com/spf13/pflag"
-	"gopkg.in/yaml.v2"
 
 	"github.com/grpcdemo/lib"
 	"github.com/grpcdemo/person"
@@ -17,7 +19,7 @@ import (
 )
 
 var (
-	file *string = flag.StringP("file", "f", "config.yaml", "client configuration")
+	addr *string = flag.StringP("port", "p", "50051", "[<host>:]<port>")
 	cmd  *string = flag.StringP("cmd", "c", "commands.json", "list of commands")
 )
 
@@ -80,17 +82,20 @@ type configClient struct {
 }
 
 func parseConfig() (*configClient, error) {
-	bytes, err := lib.ReadFile(*file)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read config file: %w", err)
+	var host string
+	var port int
+	if matches, _ := regexp.MatchString(`\w*:\d`, *addr); matches {
+		addrParts := strings.Split(*addr, ":")
+		host = addrParts[0]
+		port, _ = strconv.Atoi(addrParts[1])
+	} else if matches, _ := regexp.MatchString(`\d`, *addr); matches {
+		port, _ = strconv.Atoi(*addr)
 	}
 
-	var config configClient
-	if err := yaml.Unmarshal(bytes, &config); err != nil {
-		return nil, fmt.Errorf("unable to cast object to config struct: %w", err)
-	}
-
-	return &config, nil
+	return &configClient{
+		ServerHost: host,
+		ServerPort: port,
+	}, nil
 }
 
 type kwArg struct {

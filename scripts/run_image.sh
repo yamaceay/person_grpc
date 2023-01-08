@@ -1,1 +1,1 @@
-docker run --rm -itd -p 50051:50051 person-server
+docker run --rm -d -p 50051:50051 person-server
